@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Anunțuri.ro - Platformă de anunțuri gratuite</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f97316;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: #1a1a1a;
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 500px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 30px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-bar input:focus {
+      border-color: #f97316;
+    }
+
+    .search-bar button {
+      background: #f97316;
+      border: none;
+      border-radius: 30px;
+      padding: 10px 20px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-bar button:hover {
+      background: #ea580c;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-size: 14px;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e5e5e5;
+      color: #1a1a1a;
+    }
+
+    .btn-outline:hover {
+      border-color: #f97316;
+      color: #f97316;
+    }
+
+    .btn-primary {
+      background: #f97316;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #ea580c;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    /* Container principal */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Categorii */
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .category {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8f8f8;
+      min-width: 70px;
+    }
+
+    .category:hover, .category.active {
+      background: #fef3e8;
+      color: #f97316;
+    }
+
+    .category-icon {
+      font-size: 24px;
+    }
+
+    .category-name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Grid anunțuri */
+    .ads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .ad-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .ad-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .ad-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #e5e5e5;
+    }
+
+    .ad-content {
+      padding: 12px;
+    }
+
+    .ad-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f97316;
+      margin-bottom: 6px;
+    }
+
+    .ad-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .ad-location {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .ad-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #999;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #f97316;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .image-preview {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .image-preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    /* Mesaje toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 14px;
+      z-index: 1100;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e5e5e5;
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+      }
+      .search-bar {
+        max-width: 100%;
+        width: 100%;
+      }
+      .categories {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+      .ads-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .ads-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-new { background: #4ade80; color: white; }
+    .badge-urgent { background: #f97316; color: white; }
+    .badge-sold { background: #6b7280; color: white; }
+
+    /* Pagina anunț individual */
+    .ad-detail {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .ad-detail-images {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+
+    .ad-detail-images img {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+    }
+
+    .contact-seller {
+      background: #fef3e8;
+      padding: 20px;
+      border-radius: 16px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <a class="logo">Anunțuri<span>.ro</span></a>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Caută produse, servicii..." onkeyup="if(event.key==='Enter') searchAds()">
+        <button onclick="searchAds()">Caută</button>
+      </div>
+      <div class="nav-buttons" id="nav-buttons">
+        <button class="btn btn-outline" onclick="showLoginModal()">Intră în cont</button>
+        <button class="btn btn-primary" onclick="showRegisterModal()">Publică anunț</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categorii -->
+  <div class="container">
+    <div class="categories" id="categories-list">
+      <div class="loading">Se încarcă categorii...</div>
+    </div>
+
+    <!-- Grid anunțuri -->
+    <div id="ads-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        Se încarcă anunțurile...
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Login -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Autentificare</h2>
+        <button class="close-modal" onclick="closeModal('login-modal')">&times;</button>
+      </div>
+      <div id="login-error" class="error-msg" style="display:none; background:#fee; color:#c00; padding:10px; border-radius:8px; margin-bottom:16px"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="email@exemplu.ro">
+      </div>
+      <div class="form-group">
+        <label>Parolă</label>
+        <input type="password" id="login-password" placeholder="Parola ta">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Conectează-te</button>
+      <div style="text-align:center; margin-top:16px">
+        <a href="#" onclick="showRegisterModal(); return false" style="color:#f97316">Nu ai cont? Înregistrează-te</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Înregistrare -->
+  <div id="register-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Crează cont gratuit</h2>
+        <button class="close-modal" onclick="closeModal('register-modal')">&times;</button>
+      </div>
+      <div id="register-error" class="error-msg" style="display:none; background:#fee; color:#c00; padding:10px; border-radius:8px; margin-bottom:16px"></div>
+      <div class="form-group">
+        <label>Nume utilizator</label>
+        <input type="text" id="reg-username" placeholder="ex: ionpopescu">
+      </div>
+      <div class="form-group">
+        <label>Nume complet</label>
+        <input type="text" id="reg-fullname" placeholder="Ion Popescu">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="email@exemplu.ro">
+      </div>
+      <div class="form-group">
+        <label>Parolă</label>
+        <input type="password" id="reg-password" placeholder="Minim 6 caractere">
+      </div>
+      <div class="form-group">
+        <label>Telefon (opțional)</label>
+        <input type="tel" id="reg-phone" placeholder="07xx xxx xxx">
+      </div>
+      <div class="form-group">
+        <label>Oraș</label>
+        <input type="text" id="reg-city" placeholder="București, Cluj, ...">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doRegister()">Înregistrează-te</button>
+    </div>
+  </div>
+
+  <!-- Modal Postare Anunț -->
+  <div id="post-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Publică anunț gratuit</h2>
+        <button class="close-modal" onclick="closeModal('post-modal')">&times;</button>
+      </div>
+      <div id="post-error" class="error-msg" style="display:none; background:#fee; color:#c00; padding:10px; border-radius:8px; margin-bottom:16px"></div>
+      <div class="form-group">
+        <label>Categorie</label>
+        <select id="post-category"></select>
+      </div>
+      <div class="form-group">
+        <label>Titlu</label>
+        <input type="text" id="post-title" placeholder="ex: iPhone 13 Pro Max">
+      </div>
+      <div class="form-group">
+        <label>Preț</label>
+        <input type="number" id="post-price" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Tip preț</label>
+        <select id="post-price-type">
+          <option value="fixed">Preț fix</option>
+          <option value="negotiable">Negociabil</option>
+          <option value="free">Gratis</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Locație</label>
+        <input type="text" id="post-location" placeholder="Strada, sector">
+      </div>
+      <div class="form-group">
+        <label>Oraș</label>
+        <input type="text" id="post-city" placeholder="București">
+      </div>
+      <div class="form-group">
+        <label>Stare produs</label>
+        <select id="post-condition">
+          <option value="new">Nou</option>
+          <option value="like_new">Ca nou</option>
+          <option value="good">Bun</option>
+          <option value="fair">Satisfăcător</option>
+          <option value="old">Veche</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descriere</label>
+        <textarea id="post-description" placeholder="Descrie produsul în detaliu..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Poze (max 5)</label>
+        <input type="file" id="post-images" multiple accept="image/*">
+        <div class="image-preview" id="image-preview"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="postAd()">Publică anunțul</button>
+    </div>
+  </div>
+
+  <!-- Modal Detalii Anunț -->
+  <div id="detail-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px">
+      <div class="modal-header">
+        <h2 id="detail-title"></h2>
+        <button class="close-modal" onclick="closeModal('detail-modal')">&times;</button>
+      </div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Modal Mesaje -->
+  <div id="message-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Trimite mesaj</h2>
+        <button class="close-modal" onclick="closeModal('message-modal')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Mesajul tău</label>
+        <textarea id="message-text" rows="4" placeholder="Bună, sunt interesat de anunțul tău..."></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="sendMessage()">Trimite mesaj</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+// ==================== CONFIGURARE SUPABASE ====================
+const supabaseUrl = 'https://fwtryskowjcxdgrewgrx.supabase.co';
+const supabaseKey = 'sb_publishable_F8NvWOF7fXb_kia2ghT1lw_Q539vACz';
+const sb = supabase.createClient(supabaseUrl, supabaseKey);
+
+// ==================== VARIABILE GLOBALE ====================
+let currentUser = null;
+let currentProfile = null;
+let selectedCategory = null;
+let allAds = [];
+let currentAdDetail = null;
+let selectedImages = [];
+
+// ==================== FUNCȚII UTILITARE ====================
+function toast(msg) {
+  const toastEl = document.getElementById('toast');
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
+function showModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function showLoginModal() {
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  showModal('login-modal');
+}
+
+function showRegisterModal() {
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-fullname').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-phone').value = '';
+  document.getElementById('reg-city').value = '';
+  showModal('register-modal');
+}
+
+function showPostModal() {
+  if (!currentUser) {
+    toast('Trebuie să fii autentificat pentru a publica anunțuri');
+    showLoginModal();
+    return;
+  }
+  document.getElementById('post-title').value = '';
+  document.getElementById('post-price').value = '';
+  document.getElementById('post-location').value = '';
+  document.getElementById('post-city').value = '';
+  document.getElementById('post-description').value = '';
+  document.getElementById('post-images').value = '';
+  document.getElementById('image-preview').innerHTML = '';
+  selectedImages = [];
+  loadCategoriesForSelect();
+  showModal('post-modal');
+}
+
+// ==================== AUTENTIFICARE ====================
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  
+  if (!email || !password) {
+    showError('login-error', 'Completează emailul și parola');
+    return;
+  }
+  
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  
+  if (error) {
+    showError('login-error', error.message);
+    return;
+  }
+  
+  currentUser = data.user;
+  await loadUserProfile();
+  closeModal('login-modal');
+  toast(`Bine ai revenit, ${currentProfile?.full_name || currentUser.email}!`);
+  updateNavButtons();
+  loadAds();
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const fullname = document.getElementById('reg-fullname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const phone = document.getElementById('reg-phone').value.trim();
+  const city = document.getElementById('reg-city').value.trim();
+  
+  if (!username || !fullname || !email || !password) {
+    showError('register-error', 'Completează toate câmpurile obligatorii');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError('register-error', 'Parola trebuie să aibă minim 6 caractere');
+    return;
+  }
+  
+  // Verifică dacă username-ul există deja
+  const { data: existing } = await sb.from('profiles').select('username').eq('username', username).maybeSingle();
+  if (existing) {
+    showError('register-error', 'Acest nume de utilizator este deja folosit');
+    return;
+  }
+  
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullname, username } }
+  });
+  
+  if (error) {
+    showError('register-error', error.message);
+    return;
+  }
+  
+  // Creează profilul
+  await sb.from('profiles').insert({
+    id: data.user.id,
+    email,
+    username,
+    full_name: fullname,
+    phone,
+    city
+  });
+  
+  currentUser = data.user;
+  await loadUserProfile();
+  closeModal('register-modal');
+  toast('Cont creat cu succes! Verifică-ți emailul pentru confirmare.');
+  updateNavButtons();
+  loadAds();
+}
+
+async function loadUserProfile() {
+  if (!currentUser) return;
+  
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  updateNavButtons();
+  toast('Te-ai deconectat cu succes');
+  loadAds();
+}
+
+function updateNavButtons() {
+  const nav = document.getElementById('nav-buttons');
+  if (currentUser) {
+    nav.innerHTML = `
+      <span style="font-size:14px; color:#666">👋 ${currentProfile?.full_name || currentUser.email?.split('@')[0]}</span>
+      <button class="btn btn-outline" onclick="showPostModal()">+ Publică anunț</button>
+      <button class="btn btn-outline" onclick="showMyAds()">Anunțurile mele</button>
+      <button class="btn btn-outline" onclick="showFavorites()">❤️ Favorite</button>
+      <button class="btn btn-outline" onclick="showMessages()">💬 Mesaje</button>
+      <button class="btn btn-outline" onclick="doLogout()">Ieșire</button>
+    `;
+  } else {
+    nav.innerHTML = `
+      <button class="btn btn-outline" onclick="showLoginModal()">Intră în cont</button>
+      <button class="btn btn-primary" onclick="showRegisterModal()">Publică anunț</button>
+    `;
+  }
+}
+
+// ==================== CATEGORII ====================
+async function loadCategories() {
+  const { data, error } = await sb.from('categories').select('*').order('name');
+  if (error) return;
+  
+  const container = document.getElementById('categories-list');
+  container.innerHTML = `
+    <div class="category ${!selectedCategory ? 'active' : ''}" onclick="filterByCategory(null)">
+      <div class="category-icon">📋</div>
+      <div class="category-name">Toate</div>
+    </div>
+    ${data.map(cat => `
+      <div class="category ${selectedCategory === cat.id ? 'active' : ''}" onclick="filterByCategory(${cat.id})">
+        <div class="category-icon">${cat.icon || '📦'}</div>
+        <div class="category-name">${cat.name}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function filterByCategory(categoryId) {
+  selectedCategory = categoryId;
+  loadCategories(); // Re-render cu active corect
+  loadAds();
+}
+
+async function loadCategoriesForSelect() {
+  const { data } = await sb.from('categories').select('*').order('name');
+  const select = document.getElementById('post-category');
+  if (select && data) {
+    select.innerHTML = data.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+  }
+}
+
+// ==================== ANUNȚURI ====================
+let currentSearchTerm = '';
+
+function searchAds() {
+  currentSearchTerm = document.getElementById('search-input').value;
+  loadAds();
+}
+
+async function loadAds() {
+  const container = document.getElementById('ads-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div>Se încarcă anunțurile...</div>';
+  
+  let query = sb.from('ads').select(`
+    *,
+    ad_images(image_url)
+  `).eq('status', 'active').order('created_at', { ascending: false });
+  
+  if (selectedCategory) {
+    query = query.eq('category_id', selectedCategory);
+  }
+  
+  if (currentSearchTerm) {
+    query = query.ilike('title', `%${currentSearchTerm}%`);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    container.innerHTML = '<div style="text-align:center;padding:40px">Eroare la încărcarea anunțurilor</div>';
+    return;
+  }
+  
+  allAds = data || [];
+  
+  if (allAds.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px">Nu există anunțuri în această categorie. Fii primul care publică!</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div class="ads-grid">
+      ${allAds.map(ad => `
+        <div class="ad-card" onclick="showAdDetail('${ad.id}')">
+          <img class="ad-image" src="${ad.ad_images?.[0]?.image_url || 'https://placehold.co/400x300/f5f5f5/999?text=No+Image'}" alt="${ad.title}">
+          <div class="ad-content">
+            <div class="ad-price">${ad.price_type === 'free' ? 'GRATIS' : ad.price === 0 ? 'GRATIS' : ad.price + ' lei'}${ad.price_type === 'negotiable' ? ' (negociabil)' : ''}</div>
+            <div class="ad-title">${escapeHtml(ad.title)}</div>
+            <div class="ad-location">📍 ${ad.city || ad.location || 'Locație nedisponibilă'}</div>
+            <div class="ad-footer">
+              <span>📅 ${new Date(ad.created_at).toLocaleDateString('ro-RO')}</span>
+              <span>👁️ ${ad.views || 0}</span>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+async function showAdDetail(adId) {
+  const ad = allAds.find(a => a.id === adId);
+  if (!ad) return;
+  currentAdDetail = ad;
+  
+  // Increment views
+  await sb.from('ads').update({ views: (ad.views || 0) + 1 }).eq('id', adId);
+  
+  const { data: images } = await sb.from('ad_images').select('image_url').eq('ad_id', adId);
+  const allImages = images || [];
+  
+  const { data: seller } = await sb.from('profiles').select('*').eq('id', ad.user_id).single();
+  
+  const content = `
+    <div class="ad-detail">
+      ${allImages.length > 0 ? `
+        <div class="ad-detail-images">
+          ${allImages.map(img => `<img src="${img.image_url}" alt="${ad.title}">`).join('')}
+        </div>
+      ` : `<img src="https://placehold.co/600x400/f5f5f5/999?text=Fără+imagine" style="width:100%; border-radius:12px; margin-bottom:20px">`}
+      
+      <div style="margin-bottom:20px">
+        <div style="font-size:28px; font-weight:800; color:#f97316; margin-bottom:8px">
+          ${ad.price_type === 'free' ? 'GRATIS' : ad.price === 0 ? 'GRATIS' : ad.price + ' lei'}${ad.price_type === 'negotiable' ? ' <span style="font-size:14px; color:#666">(negociabil)</span>' : ''}
+        </div>
+        <div style="font-size:24px; font-weight:600; margin-bottom:8px">${escapeHtml(ad.title)}</div>
+        <div style="color:#666; margin-bottom:16px">📍 ${ad.city || ad.location || 'Locație nedisponibilă'} · ${new Date(ad.created_at).toLocaleDateString('ro-RO')}</div>
+        ${ad.condition ? `<div style="margin-bottom:16px"><span class="badge badge-new">${getConditionText(ad.condition)}</span></div>` : ''}
+        <div style="background:#f8f8f8; padding:16px; border-radius:12px; margin-bottom:20px">
+          <div style="font-weight:600; margin-bottom:8px">📝 Descriere</div>
+          <div style="color:#444; line-height:1.6">${escapeHtml(ad.description) || 'Nicio descriere adăugată.'}</div>
+        </div>
+      </div>
+      
+      <div class="contact-seller">
+        <div style="font-weight:600; margin-bottom:12px">📞 Contactează vânzătorul</div>
+        <div style="margin-bottom:12px">
+          <div><strong>${seller?.full_name || 'Vânzător'}</strong></div>
+          ${seller?.phone ? `<div>📱 ${seller.phone}</div>` : ''}
+          <div>📍 ${seller?.city || 'Locație nedisponibilă'}</div>
+        </div>
+        ${currentUser && currentUser.id !== ad.user_id ? `
+          <button class="btn btn-primary" style="width:100%; margin-top:8px" onclick="showMessageModal('${ad.id}', '${ad.user_id}')">✉️ Trimite mesaj vânzătorului</button>
+        ` : currentUser && currentUser.id === ad.user_id ? `
+          <div style="background:#fef3e8; padding:12px; border-radius:12px; text-align:center">
+            Acesta este anunțul tău. Poți <a href="#" onclick="editAd(); return false" style="color:#f97316">edita</a> sau 
+            <a href="#" onclick="deleteAd(); return false" style="color:#dc2626">șterge</a> anunțul.
+          </div>
+        ` : `
+          <button class="btn btn-primary" style="width:100%" onclick="showLoginModal()">Autentifică-te pentru a contacta vânzătorul</button>
+        `}
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('detail-title').textContent = ad.title;
+  document.getElementById('detail-content').innerHTML = content;
+  showModal('detail-modal');
+}
+
+function getConditionText(condition) {
+  const map = {
+    'new': 'Nou',
+    'like_new': 'Ca nou',
+    'good': 'Bun',
+    'fair': 'Satisfăcător',
+    'old': 'Veche'
+  };
+  return map[condition] || condition;
+}
+
+// ==================== POSTARE ANUNȚ ====================
+function previewImages() {
+  const input = document.getElementById('post-images');
+  const preview = document.getElementById('image-preview');
+  preview.innerHTML = '';
+  selectedImages = [];
+  
+  for (let i = 0; i < input.files.length && i < 5; i++) {
+    const file = input.files[i];
+    selectedImages.push(file);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+document.getElementById('post-images').addEventListener('change', previewImages);
+
+async function postAd() {
+  if (!currentUser) {
+    toast('Trebuie să fii autentificat');
+    return;
+  }
+  
+  const category = document.getElementById('post-category').value;
+  const title = document.getElementById('post-title').value.trim();
+  const price = parseInt(document.getElementById('post-price').value) || 0;
+  const priceType = document.getElementById('post-price-type').value;
+  const location = document.getElementById('post-location').value.trim();
+  const city = document.getElementById('post-city').value.trim();
+  const condition = document.getElementById('post-condition').value;
+  const description = document.getElementById('post-description').value.trim();
+  
+  if (!title) {
+    showError('post-error', 'Titlul este obligatoriu');
+    return;
+  }
+  
+  // Postează anunțul
+  const { data: ad, error } = await sb.from('ads').insert({
+    user_id: currentUser.id,
+    category_id: category,
+    title,
+    description,
+    price,
+    price_type: priceType,
+    location,
+    city,
+    condition,
+    status: 'active'
+  }).select().single();
+  
+  if (error) {
+    showError('post-error', error.message);
+    return;
+  }
+  
+  // Upload imagini
+  if (selectedImages.length > 0) {
+    for (let i = 0; i < selectedImages.length; i++) {
+      const file = selectedImages[i];
+      const fileName = `${ad.id}/${Date.now()}_${i}.jpg`;
+      const { error: uploadError } = await sb.storage.from('ad-images').upload(fileName, file);
+      
+      if (!uploadError) {
+        const { data: urlData } = sb.storage.from('ad-images').getPublicUrl(fileName);
+        await sb.from('ad_images').insert({
+          ad_id: ad.id,
+          image_url: urlData.publicUrl,
+          position: i
+        });
+      }
+    }
+  }
+  
+  closeModal('post-modal');
+  toast('Anunțul a fost publicat cu succes!');
+  loadAds();
+}
+
+// ==================== MESAJE ====================
+let currentMessageAdId = null;
+let currentMessageReceiverId = null;
+
+function showMessageModal(adId, receiverId) {
+  currentMessageAdId = adId;
+  currentMessageReceiverId = receiverId;
+  document.getElementById('message-text').value = '';
+  showModal('message-modal');
+}
+
+async function sendMessage() {
+  if (!currentUser) {
+    toast('Trebuie să fii autentificat');
+    return;
+  }
+  
+  const message = document.getElementById('message-text').value.trim();
+  if (!message) {
+    toast('Scrie un mesaj');
+    return;
+  }
+  
+  const { error } = await sb.from('messages').insert({
+    ad_id: currentMessageAdId,
+    sender_id: currentUser.id,
+    receiver_id: currentMessageReceiverId,
+    message
+  });
+  
+  if (error) {
+    toast('Eroare la trimiterea mesajului');
+    return;
+  }
+  
+  closeModal('message-modal');
+  toast('Mesaj trimis cu succes!');
+}
+
+async function showMessages() {
+  if (!currentUser) {
+    showLoginModal();
+    return;
+  }
+  
+  const { data } = await sb.from('messages')
+    .select(`
+      *,
+      ads(title),
+      sender:profiles!sender_id(full_name),
+      receiver:profiles!receiver_id(full_name)
+    `)
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+    .order('created_at', { ascending: false });
+  
+  if (!data || data.length === 0) {
+    toast('Nu ai mesaje');
+    return;
+  }
+  
+  // Afișează mesajele într-un modal simplu
+  const messagesHtml = data.map(m => `
+    <div style="padding:12px; border-bottom:1px solid #eee">
+      <div style="font-weight:600">${m.sender_id === currentUser.id ? 'Către: ' + (m.receiver?.full_name || 'Vânzător') : 'De la: ' + (m.sender?.full_name || 'Cumpărător')}</div>
+      <div style="font-size:12px; color:#999">Anunț: ${m.ads?.title || '—'}</div>
+      <div style="margin-top:6px">${escapeHtml(m.message)}</div>
+      <div style="font-size:11px; color:#999; margin-top:4px">${new Date(m.created_at).toLocaleString('ro-RO')}</div>
+    </div>
+  `).join('');
+  
+  const modalContent = `
+    <div class="modal-header">
+      <h2>Mesajele mele</h2>
+      <button class="close-modal" onclick="closeModal('messages-modal')">&times;</button>
+    </div>
+    <div style="max-height:60vh; overflow-y:auto">${messagesHtml || '<div style="padding:20px; text-align:center">Nu ai mesaje</div>'}</div>
+  `;
+  
+  // Creează modal temporar
+  let tempModal = document.getElementById('temp-messages-modal');
+  if (!tempModal) {
+    tempModal = document.createElement('div');
+    tempModal.id = 'temp-messages-modal';
+    tempModal.className = 'modal';
+    tempModal.innerHTML = `<div class="modal-content" id="temp-messages-content"></div>`;
+    document.body.appendChild(tempModal);
+  }
+  document.getElementById('temp-messages-content').innerHTML = modalContent;
+  tempModal.classList.add('active');
+  
+  // Adaugă eveniment de închidere
+  const closeBtn = tempModal.querySelector('.close-modal');
+  if (closeBtn) {
+    closeBtn.onclick = () => tempModal.classList.remove('active');
+  }
+}
+
+// ==================== ANUNȚURILE MELE ====================
+async function showMyAds() {
+  if (!currentUser) {
+    showLoginModal();
+    return;
+  }
+  
+  const { data } = await sb.from('ads').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  
+  if (!data || data.length === 0) {
+    toast('Nu ai publicat niciun anunț');
+    return;
+  }
+  
+  const adsHtml = data.map(ad => `
+    <div style="display:flex; gap:12px; padding:12px; border-bottom:1px solid #eee; align-items:center">
+      <div style="flex:1">
+        <div style="font-weight:600">${escapeHtml(ad.title)}</div>
+        <div style="font-size:12px; color:#f97316">${ad.price === 0 ? 'GRATIS' : ad.price + ' lei'}</div>
+        <div style="font-size:11px; color:#999">${new Date(ad.created_at).toLocaleDateString('ro-RO')}</div>
+      </div>
+      <button class="btn btn-outline" style="padding:4px 12px" onclick="viewAdDetail('${ad.id}')">Vezi</button>
+      <button class="btn btn-danger" style="padding:4px 12px" onclick="deleteMyAd('${ad.id}')">Șterge</button>
+    </div>
+  `).join('');
+  
+  const modalContent = `
+    <div class="modal-header">
+      <h2>Anunțurile mele</h2>
+      <button class="close-modal" onclick="closeModal('myads-modal')">&times;</button>
+    </div>
+    <div style="max-height:60vh; overflow-y:auto">${adsHtml}</div>
+  `;
+  
+  let modal = document.getElementById('myads-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'myads-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-content" id="myads-content"></div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('myads-content').innerHTML = modalContent;
+  modal.classList.add('active');
+}
+
+async function viewAdDetail(adId) {
+  const ad = await sb.from('ads').select('*').eq('id', adId).single();
+  if (ad.data) {
+    closeModal('myads-modal');
+    currentAdDetail = ad.data;
+    showAdDetail(adId);
+  }
+}
+
+async function deleteMyAd(adId) {
+  if (!confirm('Ești sigur că vrei să ștergi acest anunț? Acțiunea este ireversibilă.')) return;
+  
+  await sb.from('ad_images').delete().eq('ad_id', adId);
+  await sb.from('ads').delete().eq('id', adId);
+  toast('Anunț șters cu succes');
+  showMyAds(); // Reîncarcă lista
+  loadAds(); // Reîncarcă pagina principală
+}
+
+// ==================== FAVORITE ====================
+async function showFavorites() {
+  if (!currentUser) {
+    showLoginModal();
+    return;
+  }
+  
+  const { data } = await sb.from('favorites').select('ad_id').eq('user_id', currentUser.id);
+  if (!data || data.length === 0) {
+    toast('Nu ai anunțuri favorite');
+    return;
+  }
+  
+  const adIds = data.map(f => f.ad_id);
+  const { data: ads } = await sb.from('ads').select('*').in('id', adIds);
+  
+  const adsHtml = (ads || []).map(ad => `
+    <div style="display:flex; gap:12px; padding:12px; border-bottom:1px solid #eee; align-items:center; cursor:pointer" onclick="showAdDetail('${ad.id}')">
+      <div style="flex:1">
+        <div style="font-weight:600">${escapeHtml(ad.title)}</div>
+        <div style="font-size:12px; color:#f97316">${ad.price === 0 ? 'GRATIS' : ad.price + ' lei'}</div>
+        <div style="font-size:11px; color:#999">📍 ${ad.city || ad.location}</div>
+      </div>
+      <div style="font-size:20px">›</div>
+    </div>
+  `).join('');
+  
+  const modalContent = `
+    <div class="modal-header">
+      <h2>Anunțuri favorite</h2>
+      <button class="close-modal" onclick="closeModal('favs-modal')">&times;</button>
+    </div>
+    <div style="max-height:60vh; overflow-y:auto">${adsHtml || '<div style="padding:20px; text-align:center">Nu ai anunțuri favorite</div>'}</div>
+  `;
+  
+  let modal = document.getElementById('favs-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'favs-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-content" id="favs-content"></div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('favs-content').innerHTML = modalContent;
+  modal.classList.add('active');
+}
+
+// ==================== INITIALIZARE ====================
+function showError(elementId, message) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent = message;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+  } else {
+    toast(message);
+  }
+}
+
+async function init() {
+  // Verifică sesiunea existentă
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await loadUserProfile();
+    updateNavButtons();
+  }
+  
+  // Încarcă datele
+  await loadCategories();
+  await loadAds();
+  
+  // Ascultă schimbările de autentificare
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      currentUser = session.user;
+      await loadUserProfile();
+      updateNavButtons();
+      loadAds();
+    }
+    if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      currentProfile = null;
+      updateNavButtons();
+      loadAds();
+    }
+  });
+}
+
+// Pornește aplicația
+init();
+</script>
+</body>
+</html>
